@@ -1,0 +1,121 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background-color: #e0f2f7;
+  color: #333;
+}
+
+#sky {
+  height: 15vh;
+  background: #aee1f9;
+  width: 100%;
+}
+
+#scroll-container {
+  position: absolute;
+  top: 15vh;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  background-image: url('wall.jpg');
+  background-repeat: repeat;
+  background-position: 0 0;
+  background-size: auto;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;
+}
+
+#scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+#wall {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  padding: 5em 1em 1em;
+  height: calc(100% - 4em);
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+.post {
+  border-radius: 8px;
+  padding: 0.5em 1em;
+  min-width: 250px;
+  max-width: 300px;
+  box-sizing: border-box;
+  background-clip: padding-box;
+  background-color: transparent;
+}
+
+.post p {
+  word-wrap: break-word;
+  white-space: normal;
+  margin: 0;
+}
+
+.post img {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+form#postForm {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1em;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  z-index: 20;
+  width: 270px;
+}
+
+form#postForm textarea {
+  font-size: 1em;
+  padding: 0.5em;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 200px;
+  width: 100%;
+}
+
+form#postForm select,
+form#postForm input[type="color"],
+form#postForm input[type="file"],
+form#postForm input[type="number"] {
+  padding: 0.4em;
+}
+
+form#postForm button {
+  cursor: pointer;
+  padding: 0.6em;
+  background-color: #1976d2;
+  border: none;
+  color: white;
+  font-weight: bold;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+form#postForm button:hover {
+  background-color: #135ba1;
+}
+
+#preview {
+  border: 1px dashed #999;
+  padding: 0.5em;
+  border-radius: 8px;
+  margin-top: 0.5em;
+  max-width: 100%;
+}

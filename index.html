@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Wall - Avanzato</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div id="sky"></div>
+
+<form id="postForm">
+  <textarea name="text" maxlength="100" placeholder="Write something..." id="textField"></textarea>
+
+  <input type="file" name="image" />
+
+  <label><input type="checkbox" id="transparentBgCheckbox" /> Transparent background</label>
+
+  <label>Text color: <input type="color" name="textColor" id="textColorPicker" value="#222222" /></label>
+
+  <label>Background: <input type="color" name="bgColor" id="bgColorPicker" value="#ffffff" /></label>
+
+  <div style="display: flex; align-items: center; gap: 8px; margin-top: 5px;">
+    <label for="fontSize" style="white-space: nowrap;">Text size (px):</label>
+    <input type="number" id="fontSize" name="fontSize" min="8" max="100" value="16" style="width: 60px;">
+  </div>
+
+  <label>Font style:
+    <select name="fontStyle">
+      <option value="normal">Regular</option>
+      <option value="italic">Italic</option>
+    </select>
+  </label>
+
+  <label>Text alignment:
+    <select name="textAlign" id="textAlign">
+      <option value="left">Left</option>
+      <option value="center">Center</option>
+      <option value="right">Right</option>
+    </select>
+  </label>
+
+  <!-- Checkbox per grassetto -->
+  <label><input type="checkbox" id="fontWeightBold" name="fontWeight" /> Bold</label>
+
+  <div id="preview">Preview here...</div>
+  <button type="submit">Post</button>
+</form>
+
+<div id="scroll-container">
+  <div id="wall"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
