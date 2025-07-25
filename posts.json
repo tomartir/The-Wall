@@ -1,0 +1,101 @@
+[
+  {
+    "nickname": null,
+    "text": null,
+    "image": "uploads/1753123115702-Immagine-removebg-preview.png",
+    "textColor": "#222222",
+    "bgColor": "transparent",
+    "fontSize": "16px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "normal"
+  },
+  {
+    "nickname": null,
+    "text": "W SINNER",
+    "image": null,
+    "textColor": "#ffffff",
+    "bgColor": "#ff0000",
+    "fontSize": "37px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "bold"
+  },
+  {
+    "nickname": null,
+    "text": "CIAO",
+    "image": null,
+    "textColor": "#222222",
+    "bgColor": "#ffffff",
+    "fontSize": "72px",
+    "fontStyle": "normal",
+    "textAlign": "center",
+    "fontWeight": "normal"
+  },
+  {
+    "nickname": null,
+    "text": "\r\nleave it on the wall",
+    "image": null,
+    "textColor": "#ffffff",
+    "bgColor": "#ff0000",
+    "fontSize": "16px",
+    "fontStyle": "italic",
+    "textAlign": "left",
+    "fontWeight": "bold"
+  },
+  {
+    "nickname": null,
+    "text": "il verde brillante della prateria mostrava in maniera lampante l'esistenza di Dio",
+    "image": null,
+    "textColor": "#ffffff",
+    "bgColor": "#08ba5e",
+    "fontSize": "36px",
+    "fontStyle": "italic",
+    "textAlign": "left",
+    "fontWeight": "bold"
+  },
+  {
+    "nickname": null,
+    "text": "è nato francesco\r\n22/07/20025",
+    "image": null,
+    "textColor": "#ce0909",
+    "bgColor": "#ccd912",
+    "fontSize": "72px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "bold"
+  },
+  {
+    "nickname": null,
+    "text": "adesso che tocca a me ",
+    "image": null,
+    "textColor": "#222222",
+    "bgColor": "#ffffff",
+    "fontSize": "72px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "normal"
+  },
+  {
+    "nickname": null,
+    "text": "adesso che tocca a me\r\nmartiriggiano ",
+    "image": null,
+    "textColor": "#222222",
+    "bgColor": "#ffffff",
+    "fontSize": "36px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "normal"
+  },
+  {
+    "nickname": null,
+    "text": null,
+    "image": "uploads/1753450857769-Immagine-removebg-preview.png",
+    "textColor": "#222222",
+    "bgColor": "transparent",
+    "fontSize": "16px",
+    "fontStyle": "normal",
+    "textAlign": "left",
+    "fontWeight": "normal"
+  }
+]
