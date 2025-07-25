@@ -12,7 +12,7 @@ const app = express();
 const PORT = 3000;
 
 // Serve la cartella frontend (modifica se il percorso non è ../frontend)
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname)));
 
 // Middleware per JSON e CORS
 app.use(cors());
