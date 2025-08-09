@@ -30,10 +30,14 @@ try {
   posts = [];
 }
 
-// Creo la cartella uploads se non esiste
+// Creo la cartella uploads in modo sicuro (ignore errore se già esiste)
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+try {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+} catch (err) {
+  if (err.code !== 'EEXIST') {
+    throw err;
+  }
 }
 
 // Configurazione Multer per upload immagini
