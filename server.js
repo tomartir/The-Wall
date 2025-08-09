@@ -30,31 +30,27 @@ try {
   posts = [];
 }
 
-// Creo la cartella uploads in modo sicuro (ignore errore se già esiste)
 const uploadsDir = path.join(__dirname, 'uploads');
-try {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-} catch (err) {
-  if (err.code !== 'EEXIST') {
-    throw err;
-  }
-}
 
-// Configurazione Multer per upload immagini
+// Configurazione Multer per upload immagini con creazione asincrona e sicura della cartella
 const storage = multer.diskStorage({
-  destination: uploadsDir,
+  destination: (req, file, cb) => {
+    fs.mkdir(uploadsDir, { recursive: true }, (err) => {
+      cb(err, uploadsDir);
+    });
+  },
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
 // Endpoint per aggiungere un post
 app.post('/post', upload.single('image'), (req, res) => {
-	
-	// Filtro anti-volgarità sul testo
-	//if (filter.isProfane(req.body.text)) {
-	//	return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
-	//}
-	
+  
+  // Filtro anti-volgarità sul testo (disabilitato per ora)
+  //if (filter.isProfane(req.body.text)) {
+  //  return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
+  //}
+  
   const newPost = {
     nickname: req.body.nickname || null,
     text: req.body.text || null,
@@ -64,7 +60,7 @@ app.post('/post', upload.single('image'), (req, res) => {
     fontSize: req.body.fontSize || '1em',
     fontStyle: req.body.fontStyle || 'normal',
     textAlign: req.body.textAlign || 'left',
-	fontWeight: req.body.fontWeight || 'normal'
+    fontWeight: req.body.fontWeight || 'normal'
   };
 
   posts.push(newPost);
