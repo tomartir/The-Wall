@@ -7,7 +7,6 @@ const path = require('path');
 //const filter = new Filter();
 //filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
 
-
 const app = express();
 const PORT = 3000;
 
@@ -31,9 +30,15 @@ try {
   posts = [];
 }
 
+// Creo la cartella uploads se non esiste
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
 // Configurazione Multer per upload immagini
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: uploadsDir,
   filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
@@ -57,7 +62,6 @@ app.post('/post', upload.single('image'), (req, res) => {
     textAlign: req.body.textAlign || 'left',
 	fontWeight: req.body.fontWeight || 'normal'
   };
-
 
   posts.push(newPost);
 
