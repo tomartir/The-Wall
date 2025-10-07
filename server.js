@@ -1,10 +1,11 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const { MongoClient } = require('mongodb');
-const { v2: cloudinary } = require('cloudinary');
+const cloudinary = require('cloudinary').v2;
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,73 +15,78 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Cloudinary config
+// Multer per upload temporanei
+const upload = multer({ dest: 'temp_uploads/' });
+
+// Configurazione Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// MongoDB Atlas
+// Connessione a MongoDB
 const client = new MongoClient(process.env.MONGO_URI);
 let postsCollection;
 
 async function connectDB() {
   await client.connect();
-  const db = client.db('thewall');
+  const db = client.db('thewall');   // nome DB
   postsCollection = db.collection('posts');
-  console.log('Connesso a MongoDB Atlas');
+  console.log("✅ Connesso a MongoDB Atlas");
 }
 connectDB().catch(console.error);
 
-// Multer in memoria
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// POST /post
+// Endpoint per aggiungere un post
 app.post('/post', upload.single('image'), async (req, res) => {
   try {
     let imageUrl = null;
+
     if (req.file) {
-      const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          { folder: 'thewall' },
-          (error, result) => error ? reject(error) : resolve(result)
-        );
-        stream.end(req.file.buffer);
+      // Upload immagine su Cloudinary
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: "thewall"
       });
       imageUrl = result.secure_url;
+
+      // Elimina file temporaneo
+      fs.unlinkSync(req.file.path);
     }
 
-    const post = {
+    const newPost = {
+      nickname: req.body.nickname || null,
       text: req.body.text || null,
       image: imageUrl,
       textColor: req.body.textColor || '#222',
       bgColor: req.body.bgColor || 'transparent',
-      fontSize: req.body.fontSize || '1em',
+      fontSize: req.body.fontSize || '16px',
       fontStyle: req.body.fontStyle || 'normal',
       textAlign: req.body.textAlign || 'left',
       fontWeight: req.body.fontWeight || 'normal',
       createdAt: new Date()
     };
 
-    await postsCollection.insertOne(post);
-    res.status(201).json(post);
+    await postsCollection.insertOne(newPost);
+    res.status(201).json(newPost);
+
   } catch (err) {
-    console.error('Errore POST:', err);
-    res.status(500).json({ error: 'Errore salvataggio post' });
+    console.error("❌ Errore nel salvataggio del post:", err);
+    res.status(500).json({ error: 'Errore nel salvataggio del post' });
   }
 });
 
-// GET /posts
+// Endpoint per ottenere tutti i post
 app.get('/posts', async (req, res) => {
   try {
-    const posts = await postsCollection.find({}).sort({ createdAt: 1 }).toArray();
-    res.json(posts);
+    const allPosts = await postsCollection.find({}).sort({ createdAt: 1 }).toArray();
+    res.json(allPosts);
   } catch (err) {
-    console.error('Errore GET /posts:', err);
-    res.status(500).json({ error: 'Errore caricamento post' });
+    console.error("❌ Errore nel caricamento post:", err);
+    res.status(500).json({ error: 'Errore nel caricamento dei post' });
   }
 });
 
-app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
+// Avvio server
+app.listen(PORT, () => {
+  console.log(`🚀 Server avviato su http://localhost:${PORT}`);
+});
