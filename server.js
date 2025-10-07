@@ -1,82 +1,86 @@
+// server.js
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-//const Filter = require('bad-words');
-//const filter = new Filter();
-//filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
+require('dotenv').config();
+const { MongoClient } = require('mongodb');
+const { v2: cloudinary } = require('cloudinary');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Serve la cartella frontend (modifica se il percorso non è ../frontend)
-app.use(express.static(__dirname));
-
-// Middleware per JSON e CORS
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(__dirname));
 
-// File JSON dove salvare i post
-const POSTS_FILE = path.join(__dirname, 'posts.json');
-
-// Carico i post esistenti all’avvio
-let posts = [];
-try {
-  const data = fs.readFileSync(POSTS_FILE, 'utf-8');
-  posts = JSON.parse(data);
-} catch {
-  posts = [];
-}
-
-const uploadsDir = path.join(__dirname, 'uploads');
-
-// Configurazione Multer per upload immagini con creazione asincrona e sicura della cartella
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    fs.mkdir(uploadsDir, { recursive: true }, (err) => {
-      cb(err, uploadsDir);
-    });
-  },
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
+
+// MongoDB Atlas
+const client = new MongoClient(process.env.MONGO_URI);
+let postsCollection;
+
+async function connectDB() {
+  await client.connect();
+  const db = client.db('thewall');
+  postsCollection = db.collection('posts');
+  console.log('Connesso a MongoDB Atlas');
+}
+connectDB().catch(console.error);
+
+// Multer in memoria
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Endpoint per aggiungere un post
-app.post('/post', upload.single('image'), (req, res) => {
-  
-  // Filtro anti-volgarità sul testo (disabilitato per ora)
-  //if (filter.isProfane(req.body.text)) {
-  //  return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
-  //}
-  
-  const newPost = {
-    nickname: req.body.nickname || null,
-    text: req.body.text || null,
-    image: req.file ? req.file.path.replace(/\\/g, '/') : null,
-    textColor: req.body.textColor || '#222',
-    bgColor: typeof req.body.bgColor !== 'undefined' ? req.body.bgColor : "#ffffff",
-    fontSize: req.body.fontSize || '1em',
-    fontStyle: req.body.fontStyle || 'normal',
-    textAlign: req.body.textAlign || 'left',
-    fontWeight: req.body.fontWeight || 'normal'
-  };
-
-  posts.push(newPost);
-
-  fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), err => {
-    if (err) {
-      console.error('Errore scrittura file posts:', err);
-      return res.status(500).json({ error: 'Errore salvataggio post' });
+// POST /post
+app.post('/post', upload.single('image'), async (req, res) => {
+  try {
+    let imageUrl = null;
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'thewall' },
+          (error, result) => error ? reject(error) : resolve(result)
+        );
+        stream.end(req.file.buffer);
+      });
+      imageUrl = result.secure_url;
     }
-    res.status(201).json(newPost);
-  });
+
+    const post = {
+      text: req.body.text || null,
+      image: imageUrl,
+      textColor: req.body.textColor || '#222',
+      bgColor: req.body.bgColor || 'transparent',
+      fontSize: req.body.fontSize || '1em',
+      fontStyle: req.body.fontStyle || 'normal',
+      textAlign: req.body.textAlign || 'left',
+      fontWeight: req.body.fontWeight || 'normal',
+      createdAt: new Date()
+    };
+
+    await postsCollection.insertOne(post);
+    res.status(201).json(post);
+  } catch (err) {
+    console.error('Errore POST:', err);
+    res.status(500).json({ error: 'Errore salvataggio post' });
+  }
 });
 
-// Endpoint per ottenere tutti i post
-app.get('/posts', (req, res) => {
-  res.json(posts);
+// GET /posts
+app.get('/posts', async (req, res) => {
+  try {
+    const posts = await postsCollection.find({}).sort({ createdAt: 1 }).toArray();
+    res.json(posts);
+  } catch (err) {
+    console.error('Errore GET /posts:', err);
+    res.status(500).json({ error: 'Errore caricamento post' });
+  }
 });
 
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
