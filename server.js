@@ -3,90 +3,80 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
-const { MongoClient } = require('mongodb');
-const cloudinary = require('cloudinary').v2;
-require('dotenv').config();
+//const Filter = require('bad-words');
+//const filter = new Filter();
+//filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Serve la cartella frontend (modifica se il percorso non è ../frontend)
 app.use(express.static(__dirname));
 
-// Multer per upload temporanei
-const upload = multer({ dest: 'temp_uploads/' });
+// Middleware per JSON e CORS
+app.use(cors());
+app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Configurazione Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+// File JSON dove salvare i post
+const POSTS_FILE = path.join(__dirname, 'posts.json');
 
-// Connessione a MongoDB
-const client = new MongoClient(process.env.MONGO_URI);
-let postsCollection;
-
-async function connectDB() {
-  await client.connect();
-  const db = client.db('thewall');   // nome DB
-  postsCollection = db.collection('posts');
-  console.log("✅ Connesso a MongoDB Atlas");
+// Carico i post esistenti all’avvio
+let posts = [];
+try {
+  const data = fs.readFileSync(POSTS_FILE, 'utf-8');
+  posts = JSON.parse(data);
+} catch {
+  posts = [];
 }
-connectDB().catch(console.error);
+
+const uploadsDir = path.join(__dirname, 'uploads');
+
+// Configurazione Multer per upload immagini con creazione asincrona e sicura della cartella
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    fs.mkdir(uploadsDir, { recursive: true }, (err) => {
+      cb(err, uploadsDir);
+    });
+  },
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({ storage });
 
 // Endpoint per aggiungere un post
-app.post('/post', upload.single('image'), async (req, res) => {
-  try {
-    let imageUrl = null;
+app.post('/post', upload.single('image'), (req, res) => {
+  
+  // Filtro anti-volgarità sul testo (disabilitato per ora)
+  //if (filter.isProfane(req.body.text)) {
+  //  return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
+  //}
+  
+  const newPost = {
+    nickname: req.body.nickname || null,
+    text: req.body.text || null,
+    image: req.file ? req.file.path.replace(/\\/g, '/') : null,
+    textColor: req.body.textColor || '#222',
+    bgColor: typeof req.body.bgColor !== 'undefined' ? req.body.bgColor : "#ffffff",
+    fontSize: req.body.fontSize || '1em',
+    fontStyle: req.body.fontStyle || 'normal',
+    textAlign: req.body.textAlign || 'left',
+    fontWeight: req.body.fontWeight || 'normal'
+  };
 
-    if (req.file) {
-      // Upload immagine su Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "thewall"
-      });
-      imageUrl = result.secure_url;
+  posts.push(newPost);
 
-      // Elimina file temporaneo
-      fs.unlinkSync(req.file.path);
+  fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), err => {
+    if (err) {
+      console.error('Errore scrittura file posts:', err);
+      return res.status(500).json({ error: 'Errore salvataggio post' });
     }
-
-    const newPost = {
-      nickname: req.body.nickname || null,
-      text: req.body.text || null,
-      image: imageUrl,
-      textColor: req.body.textColor || '#222',
-      bgColor: req.body.bgColor || 'transparent',
-      fontSize: req.body.fontSize || '16px',
-      fontStyle: req.body.fontStyle || 'normal',
-      textAlign: req.body.textAlign || 'left',
-      fontWeight: req.body.fontWeight || 'normal',
-      createdAt: new Date()
-    };
-
-    await postsCollection.insertOne(newPost);
     res.status(201).json(newPost);
-
-  } catch (err) {
-    console.error("❌ Errore nel salvataggio del post:", err);
-    res.status(500).json({ error: 'Errore nel salvataggio del post' });
-  }
+  });
 });
 
 // Endpoint per ottenere tutti i post
-app.get('/posts', async (req, res) => {
-  try {
-    const allPosts = await postsCollection.find({}).sort({ createdAt: 1 }).toArray();
-    res.json(allPosts);
-  } catch (err) {
-    console.error("❌ Errore nel caricamento post:", err);
-    res.status(500).json({ error: 'Errore nel caricamento dei post' });
-  }
+app.get('/posts', (req, res) => {
+  res.json(posts);
 });
 
-// Avvio server
-app.listen(PORT, () => {
-  console.log(`🚀 Server avviato su http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));

@@ -31,16 +31,5 @@
     "fontStyle": "normal",
     "textAlign": "left",
     "fontWeight": "normal"
-  },
-  {
-    "nickname": null,
-    "text": "ciao",
-    "image": null,
-    "textColor": "#222222",
-    "bgColor": "#ffffff",
-    "fontSize": "16px",
-    "fontStyle": "normal",
-    "textAlign": "left",
-    "fontWeight": "normal"
   }
 ]
