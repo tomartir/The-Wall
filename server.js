@@ -8,7 +8,7 @@ const path = require('path');
 //filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // usa la porta di Render
 
 // Serve la cartella frontend (modifica se il percorso non è ../frontend)
 app.use(express.static(__dirname));
@@ -16,7 +16,6 @@ app.use(express.static(__dirname));
 // Middleware per JSON e CORS
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // File JSON dove salvare i post
 const POSTS_FILE = path.join(__dirname, 'posts.json');
@@ -30,31 +29,33 @@ try {
   posts = [];
 }
 
+// Configurazione Multer per upload immagini
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-
-// Configurazione Multer per upload immagini con creazione asincrona e sicura della cartella
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     fs.mkdir(uploadsDir, { recursive: true }, (err) => {
-      cb(err, uploadsDir);
+      if (err) return cb(err);
+      cb(null, uploadsDir);
     });
   },
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
 });
 const upload = multer({ storage });
 
+// Rendo la cartella uploads pubblica
+app.use('/uploads', express.static(uploadsDir));
+
 // Endpoint per aggiungere un post
 app.post('/post', upload.single('image'), (req, res) => {
-  
+  console.log('File ricevuto:', req.file); // utile per debug su Render
+
   // Filtro anti-volgarità sul testo (disabilitato per ora)
   //if (filter.isProfane(req.body.text)) {
   //  return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
   //}
-  
+
   const newPost = {
     nickname: req.body.nickname || null,
     text: req.body.text || null,
@@ -83,4 +84,5 @@ app.get('/posts', (req, res) => {
   res.json(posts);
 });
 
+// Avvio server
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
