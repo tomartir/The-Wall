@@ -31,6 +31,10 @@ try {
 }
 
 const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 
 // Configurazione Multer per upload immagini con creazione asincrona e sicura della cartella
 const storage = multer.diskStorage({
