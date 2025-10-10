@@ -54,7 +54,7 @@ app.post('/post', upload.single('image'), (req, res) => {
   const newPost = {
     nickname: req.body.nickname || null,
     text: req.body.text || null,
-    image: req.file ? req.file.path.replace(/\\/g, '/') : null,
+    image: req.file ? path.posix.join('/uploads', req.file.filename) : null,
     textColor: req.body.textColor || '#222',
     bgColor: typeof req.body.bgColor !== 'undefined' ? req.body.bgColor : "#ffffff",
     fontSize: req.body.fontSize || '1em',
