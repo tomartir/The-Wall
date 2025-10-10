@@ -8,7 +8,7 @@ const path = require('path');
 //filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
 
 const app = express();
-const PORT = process.env.PORT || 3000; // usa la porta di Render
+const PORT = process.env.PORT || 3000;
 
 // Serve la cartella frontend (modifica se il percorso non è ../frontend)
 app.use(express.static(__dirname));
@@ -29,15 +29,15 @@ try {
   posts = [];
 }
 
-// Configurazione Multer per upload immagini
+// Cartella uploads: creo solo se non esiste
 const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+
+// Configurazione Multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    fs.mkdir(uploadsDir, { recursive: true }, (err) => {
-      if (err) return cb(err);
-      cb(null, uploadsDir);
-    });
-  },
+  destination: uploadsDir,  // cartella già esistente
   filename: (req, file, cb) => {
     cb(null, Date.now() + '-' + file.originalname);
   }
