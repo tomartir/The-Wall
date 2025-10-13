@@ -1,28 +1,6 @@
 [
   {
     "nickname": null,
-    "text": null,
-    "image": "uploads/1754729928906-Immagine 2025-07-13 074256.png",
-    "textColor": "#222222",
-    "bgColor": "transparent",
-    "fontSize": "16px",
-    "fontStyle": "normal",
-    "textAlign": "left",
-    "fontWeight": "normal"
-  },
-  {
-    "nickname": null,
-    "text": null,
-    "image": "uploads/1754730058727-Immagine-removebg-preview.png",
-    "textColor": "#222222",
-    "bgColor": "transparent",
-    "fontSize": "16px",
-    "fontStyle": "normal",
-    "textAlign": "left",
-    "fontWeight": "normal"
-  },
-  {
-    "nickname": null,
     "text": "SINNER.",
     "image": null,
     "textColor": "#cf1717",
