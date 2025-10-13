@@ -3,6 +3,7 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
 //const Filter = require('bad-words');
 //const filter = new Filter();
 //filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
@@ -17,25 +18,35 @@ app.use(express.static(__dirname));
 app.use(cors());
 app.use(express.json());
 
-// File JSON dove salvare i post
-const POSTS_FILE = path.join(__dirname, 'posts.json');
+// ---------------------- DATABASE SQLITE ----------------------
+const dbPath = path.join(__dirname, 'posts.db');
+const db = new sqlite3.Database(dbPath);
 
-// Carico i post esistenti all’avvio
-let posts = [];
-try {
-  const data = fs.readFileSync(POSTS_FILE, 'utf-8');
-  posts = JSON.parse(data);
-} catch {
-  posts = [];
-}
+// Crea la tabella se non esiste
+db.serialize(() => {
+  db.run(`
+    CREATE TABLE IF NOT EXISTS posts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nickname TEXT,
+      text TEXT,
+      image TEXT,
+      textColor TEXT,
+      bgColor TEXT,
+      fontSize TEXT,
+      fontStyle TEXT,
+      textAlign TEXT,
+      fontWeight TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+});
 
-// Cartella uploads: creo solo se non esiste
+// ---------------------- UPLOAD IMMAGINI ----------------------
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
-// Configurazione Multer
 const storage = multer.diskStorage({
   destination: uploadsDir,  // cartella già esistente
   filename: (req, file, cb) => {
@@ -47,14 +58,11 @@ const upload = multer({ storage });
 // Rendo la cartella uploads pubblica
 app.use('/uploads', express.static(uploadsDir));
 
-// Endpoint per aggiungere un post
-app.post('/post', upload.single('image'), (req, res) => {
-  console.log('File ricevuto:', req.file); // utile per debug su Render
+// ---------------------- ENDPOINTS ----------------------
 
-  // Filtro anti-volgarità sul testo (disabilitato per ora)
-  //if (filter.isProfane(req.body.text)) {
-  //  return res.status(400).json({ error: 'Il testo contiene linguaggio offensivo.' });
-  //}
+// Aggiungi un nuovo post
+app.post('/post', upload.single('image'), (req, res) => {
+  console.log('File ricevuto:', req.file);
 
   const newPost = {
     nickname: req.body.nickname || null,
@@ -68,21 +76,43 @@ app.post('/post', upload.single('image'), (req, res) => {
     fontWeight: req.body.fontWeight || 'normal'
   };
 
-  posts.push(newPost);
+  const sql = `
+    INSERT INTO posts 
+    (nickname, text, image, textColor, bgColor, fontSize, fontStyle, textAlign, fontWeight)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
 
-  fs.writeFile(POSTS_FILE, JSON.stringify(posts, null, 2), err => {
+  db.run(sql, [
+    newPost.nickname,
+    newPost.text,
+    newPost.image,
+    newPost.textColor,
+    newPost.bgColor,
+    newPost.fontSize,
+    newPost.fontStyle,
+    newPost.textAlign,
+    newPost.fontWeight
+  ], function (err) {
     if (err) {
-      console.error('Errore scrittura file posts:', err);
+      console.error('Errore salvataggio nel DB:', err);
       return res.status(500).json({ error: 'Errore salvataggio post' });
     }
+
+    newPost.id = this.lastID;
     res.status(201).json(newPost);
   });
 });
 
-// Endpoint per ottenere tutti i post
+// Recupera tutti i post
 app.get('/posts', (req, res) => {
-  res.json(posts);
+  db.all('SELECT * FROM posts ORDER BY id ASC', [], (err, rows) => {
+    if (err) {
+      console.error('Errore lettura dal DB:', err);
+      return res.status(500).json({ error: 'Errore recupero post' });
+    }
+    res.json(rows);
+  });
 });
 
-// Avvio server
+// ---------------------- AVVIO SERVER ----------------------
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
