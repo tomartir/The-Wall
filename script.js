@@ -4,6 +4,26 @@ const postForm = document.getElementById('postForm');
 const textField = document.getElementById('textField');
 const bgColorPicker = document.getElementById('bgColorPicker');
 const transparentBgCheckbox = document.getElementById('transparentBgCheckbox');
+const fontSizeInput = document.getElementById('fontSize');
+
+// Blocca digitazione e incolla
+fontSizeInput.addEventListener('keydown', e => e.preventDefault());
+fontSizeInput.addEventListener('paste', e => e.preventDefault());
+
+// Modifica solo con scroll
+fontSizeInput.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    let step = e.deltaY < 0 ? 1 : -1;
+    let newValue = parseInt(fontSizeInput.value) + step;
+    const min = parseInt(fontSizeInput.min);
+    const max = parseInt(fontSizeInput.max);
+    if(newValue < min) newValue = min;
+    if(newValue > max) newValue = max;
+    fontSizeInput.value = newValue;
+
+    // Aggiorna anteprima
+    updatePreview();
+});
 
 // Aggiunge un post visivamente al muro
 function addPostToWall(post) {
@@ -35,7 +55,7 @@ async function loadPosts() {
     wall.innerHTML = '';
     data.forEach(addPostToWall);
 
-    // Scorri automaticamente all’ultimo post
+    // Scorri automaticamente all'ultimo post
     scrollContainer.style.scrollBehavior = 'auto';
     scrollContainer.scrollLeft = scrollContainer.scrollWidth;
     scrollContainer.style.scrollBehavior = 'smooth';
@@ -45,7 +65,7 @@ async function loadPosts() {
   }
 }
 
-// Aggiorna l’anteprima del post nel form
+// Aggiorna l'anteprima del post nel form
 function updatePreview() {
   const formData = new FormData(postForm);
   const imageInput = postForm.querySelector('input[name="image"]');
