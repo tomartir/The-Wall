@@ -58,4 +58,6 @@ Il codice è gestito tramite **GitHub**.
 
 render -> dashboard-> google
 https://the-wall-po4r.onrender.com/ link sito
+https://github.com/tomartir/The-Wall
+https://dashboard.render.com/
 
