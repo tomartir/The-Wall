@@ -32,7 +32,6 @@ html, body {
   background-position: 0 0;
   background-size: auto;
   scroll-behavior: smooth;
-   background-attachment: fixed;
   -ms-overflow-style: none;
 }
 
@@ -124,6 +123,7 @@ form#postForm button:hover {
   margin-top: 0.5em;
   max-width: 100%;
 }
+
 
 
 
