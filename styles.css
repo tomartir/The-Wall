@@ -58,7 +58,6 @@ html, body {
   box-sizing: border-box;
   background-clip: padding-box;
   background-color: transparent;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .post p {
@@ -125,6 +124,7 @@ form#postForm button:hover {
   margin-top: 0.5em;
   max-width: 100%;
 }
+
 
 
 
