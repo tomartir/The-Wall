@@ -12,6 +12,10 @@ html, body {
   height: 15vh;
   background: #aee1f9;
   width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
 }
 
 #scroll-container {
@@ -120,4 +124,5 @@ form#postForm button:hover {
   margin-top: 0.5em;
   max-width: 100%;
 }
+
 
