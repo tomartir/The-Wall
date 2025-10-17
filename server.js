@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path'); 
 const cors = require('cors');
 const multer = require('multer');
 const admin = require('firebase-admin');
@@ -85,6 +86,7 @@ app.get('/posts', async (req, res) => {
 
 // ---------------------- AVVIO SERVER ----------------------
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
+
 
 
 
