@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Serve la cartella frontend (modifica il percorso se necessario)
-app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(path.join(__dirname)));
 
 app.use(cors());
 app.use(express.json());
@@ -85,6 +85,7 @@ app.get('/posts', async (req, res) => {
 
 // ---------------------- AVVIO SERVER ----------------------
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
+
 
 
 
