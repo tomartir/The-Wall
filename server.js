@@ -1,118 +1,86 @@
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-//const Filter = require('bad-words');
-//const filter = new Filter();
-//filter.addWords('cazzo', 'merda', 'vaffanculo', 'puttana', 'troia', 'stronzo', 'bastardo'); // parole italiane
+const admin = require('firebase-admin');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve la cartella frontend (modifica se il percorso non è ../frontend)
-app.use(express.static(__dirname));
-
-// Middleware per JSON e CORS
 app.use(cors());
 app.use(express.json());
 
-// ---------------------- DATABASE SQLITE ----------------------
-const dbPath = path.join(__dirname, 'posts.db');
-const db = new sqlite3.Database(dbPath);
+// ---------------------- FIREBASE ----------------------
+const serviceAccount = JSON.parse(process.env.FIREBASE_KEY);
 
-// Crea la tabella se non esiste
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nickname TEXT,
-      text TEXT,
-      image TEXT,
-      textColor TEXT,
-      bgColor TEXT,
-      fontSize TEXT,
-      fontStyle TEXT,
-      textAlign TEXT,
-      fontWeight TEXT,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  storageBucket: `${serviceAccount.project_id}.appspot.com`
 });
+
+const db = admin.firestore();
+const bucket = admin.storage().bucket();
 
 // ---------------------- UPLOAD IMMAGINI ----------------------
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-
-const storage = multer.diskStorage({
-  destination: uploadsDir,  // cartella già esistente
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
-});
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
-// Rendo la cartella uploads pubblica
-app.use('/uploads', express.static(uploadsDir));
 
 // ---------------------- ENDPOINTS ----------------------
 
 // Aggiungi un nuovo post
-app.post('/post', upload.single('image'), (req, res) => {
-  console.log('File ricevuto:', req.file);
+app.post('/post', upload.single('image'), async (req, res) => {
+  try {
+    let imageUrl = null;
 
-  const newPost = {
-    nickname: req.body.nickname || null,
-    text: req.body.text || null,
-    image: req.file ? path.posix.join('/uploads', req.file.filename) : null,
-    textColor: req.body.textColor || '#222',
-    bgColor: typeof req.body.bgColor !== 'undefined' ? req.body.bgColor : "#ffffff",
-    fontSize: req.body.fontSize || '1em',
-    fontStyle: req.body.fontStyle || 'normal',
-    textAlign: req.body.textAlign || 'left',
-    fontWeight: req.body.fontWeight || 'normal'
-  };
+    // Se c'è un'immagine, caricala su Firebase Storage
+    if (req.file) {
+      const fileName = `${Date.now()}-${uuidv4()}-${req.file.originalname}`;
+      const file = bucket.file(fileName);
 
-  const sql = `
-    INSERT INTO posts 
-    (nickname, text, image, textColor, bgColor, fontSize, fontStyle, textAlign, fontWeight)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+      await file.save(req.file.buffer, {
+        metadata: { contentType: req.file.mimetype },
+        public: true
+      });
 
-  db.run(sql, [
-    newPost.nickname,
-    newPost.text,
-    newPost.image,
-    newPost.textColor,
-    newPost.bgColor,
-    newPost.fontSize,
-    newPost.fontStyle,
-    newPost.textAlign,
-    newPost.fontWeight
-  ], function (err) {
-    if (err) {
-      console.error('Errore salvataggio nel DB:', err);
-      return res.status(500).json({ error: 'Errore salvataggio post' });
+      imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
     }
 
-    newPost.id = this.lastID;
-    res.status(201).json(newPost);
-  });
+    const newPost = {
+      nickname: req.body.nickname || null,
+      text: req.body.text || null,
+      image: imageUrl,
+      textColor: req.body.textColor || '#222',
+      bgColor: typeof req.body.bgColor !== 'undefined' ? req.body.bgColor : "#ffffff",
+      fontSize: req.body.fontSize || '1em',
+      fontStyle: req.body.fontStyle || 'normal',
+      textAlign: req.body.textAlign || 'left',
+      fontWeight: req.body.fontWeight || 'normal',
+      timestamp: Date.now()
+    };
+
+    // Salva il post su Firestore
+    const docRef = await db.collection('posts').add(newPost);
+    res.status(201).json({ id: docRef.id, ...newPost });
+
+  } catch (err) {
+    console.error('Errore salvataggio post:', err);
+    res.status(500).json({ error: 'Errore salvataggio post' });
+  }
 });
 
 // Recupera tutti i post
-app.get('/posts', (req, res) => {
-  db.all('SELECT * FROM posts ORDER BY id ASC', [], (err, rows) => {
-    if (err) {
-      console.error('Errore lettura dal DB:', err);
-      return res.status(500).json({ error: 'Errore recupero post' });
-    }
-    res.json(rows);
-  });
+app.get('/posts', async (req, res) => {
+  try {
+    const snapshot = await db.collection('posts').orderBy('timestamp', 'asc').get();
+    const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(posts);
+  } catch (err) {
+    console.error('Errore lettura post:', err);
+    res.status(500).json({ error: 'Errore lettura post' });
+  }
 });
 
 // ---------------------- AVVIO SERVER ----------------------
 app.listen(PORT, () => console.log(`Server avviato su http://localhost:${PORT}`));
+
+
