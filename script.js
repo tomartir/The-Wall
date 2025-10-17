@@ -6,6 +6,13 @@ const bgColorPicker = document.getElementById('bgColorPicker');
 const transparentBgCheckbox = document.getElementById('transparentBgCheckbox');
 const fontSizeInput = document.getElementById('fontSize');
 
+
+// Mantiene il muro in movimento insieme ai post
+scrollContainer.addEventListener("scroll", () => {
+  scrollContainer.style.backgroundPosition = `${-scrollContainer.scrollLeft}px 0`;
+});
+
+
 // Blocca digitazione e incolla
 fontSizeInput.addEventListener('keydown', e => e.preventDefault());
 fontSizeInput.addEventListener('paste', e => e.preventDefault());
@@ -198,3 +205,4 @@ setInterval(updateSkyColorByHour, 600000);
 
 loadPosts();
 updatePreview();
+
