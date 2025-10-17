@@ -33,7 +33,6 @@ html, body {
   /* Muro che si muove */
   background-image: url('wall.jpg');
   background-repeat: repeat-x;
-  background-size: auto;
   background-position: 0 0;
   background-size: auto 100%; 
   
@@ -129,6 +128,7 @@ form#postForm button:hover {
   margin-top: 0.5em;
   max-width: 100%;
 }
+
 
 
 
